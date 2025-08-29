@@ -122,7 +122,7 @@ export default function MeteorImpactPage({ meteor }: { meteor: Meteor }) {
     thermal: true,
     overpressure: true,
     ejecta: true,
-    labels: true,
+    labels: false,
   });
 
   // timeline play/pause
@@ -131,7 +131,7 @@ export default function MeteorImpactPage({ meteor }: { meteor: Meteor }) {
     let raf = 0;
     const tick = () => {
       setT((prev) => {
-        const next = prev + 0.008; // Slightly faster timeline
+        const next = prev + 0.003; // Slightly faster timeline
         return next > 1 ? 1 : next;
       });
       raf = requestAnimationFrame(tick);

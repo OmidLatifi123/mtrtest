@@ -421,7 +421,7 @@ function DamageDisk({
   const inner = 0;
   
   return (
-    <group position={position.clone().multiplyScalar(1.002)} rotation={ringRotation(position)}>
+    <group position={position.clone().multiplyScalar(1.01)} rotation={ringRotation(position)}>
       {/* Fill */}
       <mesh>
         <ringGeometry args={[inner, Math.max(outer, 0.001), 64, 1]} />
