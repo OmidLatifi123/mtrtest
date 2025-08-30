@@ -1,0 +1,156 @@
+.effectsPanel {
+  position: fixed;
+  right: 5px;
+  top: 20px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #1a1a1a;
+  border-radius: 12px;
+  padding: 16px;
+  color: white;
+  width: 320px;
+  font-family: system-ui, -apple-system, sans-serif;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s ease;
+}
+
+.effectsPanel.collapsed {
+  transform: translateX(calc(100% - 10px));
+}
+
+.toggleButton {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #1a1a1a;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #00ccff;
+  font-size: 18px;
+  transition: background-color 0.2s;
+  backdrop-filter: blur(10px);
+}
+
+.toggleButton:hover {
+  background: rgba(0, 0, 0, 0.95);
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  color: #00ccff;
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.energyBar {
+  background: linear-gradient(90deg, #ff3300, #ff9900);
+  height: 6px;
+  border-radius: 3px;
+  margin-top: 4px;
+}
+
+.dataRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.label {
+  color: #ccc;
+}
+
+.value {
+  font-weight: 500;
+  color: #fff;
+}
+
+.warning {
+  color: #ff3300;
+}
+
+.info {
+  color: #00ccff;
+}
+
+.impactType {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.impactType.airburst {
+  background: #1a4d80;
+  color: #66ccff;
+}
+
+.impactType.surface {
+  background: #801a1a;
+  color: #ff6666;
+}
+
+.distanceGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.distanceCard {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.distanceValue {
+  font-size: 1.2em;
+  font-weight: 600;
+  color: #00ccff;
+  margin-bottom: 4px;
+}
+
+.distanceLabel {
+  font-size: 0.9em;
+  color: #999;
+}
+
+.earthEffect {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.earthEffect.destroyed {
+  background: #4a0000;
+  color: #ff6666;
+}
+
+.earthEffect.disturbed {
+  background: #4a3000;
+  color: #ffcc66;
+}
+
+.earthEffect.negligible {
+  background: #004a00;
+  color: #66ff66;
+}
