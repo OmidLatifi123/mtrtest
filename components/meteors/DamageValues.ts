@@ -19,7 +19,6 @@ export type Damage_Results = {
   E_Mt: number;
   Tre_years: number;
   m_kg: number;
-  v_surface_intact: number;
   zb_breakup: number; // m
   airburst: boolean;
   v_impact_for_crater: number;
@@ -64,7 +63,7 @@ export function energyFromDiameter(L0: number, rho_i: number, v0: number) {
 
 // intact surface velocity from drag eq (eq.8* simplified)
 export function intactSurfaceVelocity(v0: number, L0: number, rho_i: number, theta_rad: number, Cd = DEFAULTS.Cd, rho0 = DEFAULTS.rho0, H = DEFAULTS.H) {
-  // v_surface = v0 * exp(-3*Cd*rho0*H/(4*rho_i*L0*sin(theta)))
+  // v_surface = v0 * exp(-3*Cd*rho0*FH/(4*rho_i*L0*sin(theta)))
   const sinT = Math.sin(theta_rad);
   const denom = 4 * rho_i * L0 * sinT;
   const factor = (3 * Cd * rho0 * H) / denom;
@@ -81,62 +80,39 @@ function atmosphericDensity(z: number, rho0 = DEFAULTS.rho0, H = DEFAULTS.H): nu
   return rho0 * Math.exp(-z / H);
 }
 
+
 // breakup If and altitude z* (analytic approx)
-export function breakupIfAndZstar(
-  L0: number, 
-  rho_i: number, 
-  v0: number, 
-  theta_rad: number, 
-  Cd = DEFAULTS.Cd, 
-  H = DEFAULTS.H, 
-  rho0 = DEFAULTS.rho0
-) {
-  const Yi = strengthFromDensity(rho_i);
-  const sinT = Math.sin(theta_rad);
+export function breakupIfAndZstar(Lo: number, rho_i: number, vo: number, theta: number, CD = DEFAULTS.Cd, H = DEFAULTS.H, rho_0 = DEFAULTS.rho0) {
+  // Calculate the yield strength Y_i using the empirical formula.
+  const Yi = Math.pow(10, 2.107 + 0.0624 * Math.sqrt(rho_i));
   
-  // Equation (12): If = (4.07 * Cd * H * Yi) / (rho_i * L0 * vi² * sin(θ))
-  const If = (4.07 * Cd * H * Yi) / (rho_i * L0 * v0 * v0 * sinT);
+  // Calculate the breakup parameter I_f.
+  const If = (CD * H * Yi) / (rho_i * Lo * Math.pow(vo, 2) * Math.sin(theta));
   
-  if (If > 1) {
-    return { If, z_star: 0, breakup: false };
+  // Determine if breakup occurs.
+  const breakup = If < 1;
+  
+  let z_star = 0;
+  // If breakup occurs, calculate the breakup altitude z_star.
+  if (breakup) {
+    z_star = -H * (Math.log(Yi / (rho_0 * Math.pow(vo, 2))) + 1.308 - 0.314 * If - 1.303 * Math.sqrt(1 - If));
   }
   
-  // Equation (11): z* = -H * ln(Yi / (ρ₀ * vi²)) * [1.308 + 0.314*If - 1.303*√(1-If)]
-  const baseLog = Math.log(Yi / (rho0 * v0 * v0));
-  const correctionFactor = 1.308 + 0.314 * If - 1.303 * Math.sqrt(1 - If);
-  const z_star = -H * baseLog * correctionFactor;
-  
-  return { If, z_star, breakup: true };
+  return { If, z_star, breakup };
 }
 
-export function pancakeAirburstAltitude(
-    L0: number,
-    rho_i: number,
-    theta_rad: number,
-    z_star: number,
-    fp = DEFAULTS.fp,
-    H = DEFAULTS.H,
-    Cd = DEFAULTS.Cd
-    ): number {
-    const sinT = Math.sin(theta_rad);
-    const rho_zstar = atmosphericDensity(z_star, DEFAULTS.rho0, H);
-    
-    // Equation (16): l = L₀ * sin(θ) * √(ρᵢ / (Cd * ρ(z*)))
-    const l = L0 * sinT * Math.sqrt(rho_i / (Cd * rho_zstar));
-    
-    // Equation (18): zb = z* - 2H * ln(1 + √(fp² - 1) * l/(2H))
-    const argument = 1 + Math.sqrt(fp * fp - 1) * l / (2 * H);
-    
-    // Check if argument is valid (must be > 0 for logarithm)
-    if (argument <= 0) {
-        // This shouldn't happen with proper parameters, but handle gracefully
-        console.warn("Invalid argument for airburst calculation, using simplified approximation");
-        return z_star - H * Math.log(fp);
-    }
-    
-    const zb = z_star - 2 * H * Math.log(argument);
-    
-    return zb;
+export function pancakeAirburstAltitude(Lo: number, rho_i: number, theta: number, z_star: number, H = DEFAULTS.H, fp = DEFAULTS.fp, CD = DEFAULTS.Cd) {
+  // The document uses rho(z*) which is the atmospheric density at the breakup altitude.
+  // We need to use the provided atmosphericDensity function to get this value.
+  const rho_z_star = atmosphericDensity(z_star);
+  
+  // Calculate the dispersion length scale 'l'.
+  const l = Lo * Math.sin(theta) * Math.sqrt(rho_i / (CD * rho_z_star));
+  
+  // Calculate the airburst altitude z_b using the rearranged equation.
+  const zb = z_star - 2 * H * Math.log(1 + (l / (2 * H)) * Math.sqrt(Math.pow(fp, 2) - 1));
+  
+  return zb;
 }
 
 // fireball radius
@@ -315,7 +291,6 @@ export function computeImpactEffects(inputs: Damage_Inputs): Damage_Results {
     E_Mt,
     Tre_years,
     m_kg: m,
-    v_surface_intact,
     zb_breakup: zb,
     airburst,
     v_impact_for_crater: v_i,

@@ -22,7 +22,6 @@ interface ImpactEffectsProps {
     E_Mt: number;
     Tre_years: number;
     m_kg: number;
-    v_surface_intact: number;
     zb_breakup: number;
     airburst: boolean;
     v_impact_for_crater: number;
@@ -113,10 +112,6 @@ export default function ImpactEffects({ effects, impactLat, impactLon }: ImpactE
               <span className={styles.value}>{impactLat.toFixed(1)}°N, {impactLon.toFixed(1)}°E</span>
             </div>
             <div className={styles.dataRow}>
-              <span className={styles.label}>Mass</span>
-              <span className={styles.value}>{(effects.m_kg / 1e6).toFixed(1)} tonnes</span>
-            </div>
-            <div className={styles.dataRow}>
               <span className={styles.label}>Energy</span>
               <span className={styles.value}>{formatEnergy(effects.E_J)}</span>
             </div>
@@ -129,10 +124,6 @@ export default function ImpactEffects({ effects, impactLat, impactLon }: ImpactE
               {effects.airburst && (
                 <span> at {formatDistance(effects.zb_breakup)} altitude</span>
               )}
-            </div>
-            <div className={styles.dataRow}>
-              <span className={styles.label}>Surface Velocity</span>
-              <span className={styles.value}>{(effects.v_surface_intact/1000).toFixed(1)} km/s</span>
             </div>
             <div className={styles.dataRow}>
               <span className={styles.label}>Impact Velocity</span>
@@ -172,6 +163,11 @@ export default function ImpactEffects({ effects, impactLat, impactLon }: ImpactE
               <div className={styles.dataRow}>
                 <span className={styles.label}>Clothing Ignition</span>
                 <span className={styles.value}>{formatDistance(effects.r_clothing_m)}</span>
+              </div>
+            )}
+            {effects.Rf_m && effects.Rf_m >= 1500 && (
+              <div className={styles.dataRow}>
+                <span className={styles.label}>Due to the curvature of the earth, the fireball cannot exceed a max of about 1500km in radius at sea level*</span>
               </div>
             )}
           </div>
