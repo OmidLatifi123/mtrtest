@@ -62,14 +62,6 @@ export function energyFromDiameter(L0: number, rho_i: number, v0: number) {
   return { m, E_J, E_Mt };
 }
 
-// strength estimate from density (empirical)
-export function strengthFromDensity(rho_i: number) {
-  // log10(Y) = 2.107 + 0.0624*(rho_i/1000)
-  const log10Y = 2.107 + 0.0624 * (rho_i / 1000);
-  const Y = Math.pow(10, log10Y);
-  return Y; // Pa
-}
-
 // intact surface velocity from drag eq (eq.8* simplified)
 export function intactSurfaceVelocity(v0: number, L0: number, rho_i: number, theta_rad: number, Cd = DEFAULTS.Cd, rho0 = DEFAULTS.rho0, H = DEFAULTS.H) {
   // v_surface = v0 * exp(-3*Cd*rho0*H/(4*rho_i*L0*sin(theta)))
@@ -80,23 +72,71 @@ export function intactSurfaceVelocity(v0: number, L0: number, rho_i: number, the
   return v_surface;
 }
 
+function strengthFromDensity(rho_i: number): number {
+  return Math.pow(10, 2.107 + 0.0624 * rho_i);
+}
+
+// Atmospheric density at altitude z
+function atmosphericDensity(z: number, rho0 = DEFAULTS.rho0, H = DEFAULTS.H): number {
+  return rho0 * Math.exp(-z / H);
+}
+
 // breakup If and altitude z* (analytic approx)
-export function breakupIfAndZstar(L0: number, rho_i: number, v0: number, theta_rad: number, Cd = DEFAULTS.Cd, H = DEFAULTS.H, rho0 = DEFAULTS.rho0) {
+export function breakupIfAndZstar(
+  L0: number, 
+  rho_i: number, 
+  v0: number, 
+  theta_rad: number, 
+  Cd = DEFAULTS.Cd, 
+  H = DEFAULTS.H, 
+  rho0 = DEFAULTS.rho0
+) {
   const Yi = strengthFromDensity(rho_i);
-  // If = (4.07 * Cd * H * Yi) / (rho_i * L0 * v0^2 * sinT)
   const sinT = Math.sin(theta_rad);
+  
+  // Equation (12): If = (4.07 * Cd * H * Yi) / (rho_i * L0 * vi² * sin(θ))
   const If = (4.07 * Cd * H * Yi) / (rho_i * L0 * v0 * v0 * sinT);
-  if (If > 1) return { If, z_star: 0, breakup: false };
-  // analytic z* approximation: z* = -H * ln(If)
-  const z_star = -H * Math.log(If);
+  
+  if (If > 1) {
+    return { If, z_star: 0, breakup: false };
+  }
+  
+  // Equation (11): z* = -H * ln(Yi / (ρ₀ * vi²)) * [1.308 + 0.314*If - 1.303*√(1-If)]
+  const baseLog = Math.log(Yi / (rho0 * v0 * v0));
+  const correctionFactor = 1.308 + 0.314 * If - 1.303 * Math.sqrt(1 - If);
+  const z_star = -H * baseLog * correctionFactor;
+  
   return { If, z_star, breakup: true };
 }
 
-// pancake/airburst altitude approximation
-export function pancakeAirburstAltitude(z_star: number, fp = DEFAULTS.fp, H = DEFAULTS.H) {
-  // simplified analytic approx used earlier: zb = z_star - 2*H*ln(fp)
-  const zb = z_star - 2 * H * Math.log(fp);
-  return zb;
+export function pancakeAirburstAltitude(
+    L0: number,
+    rho_i: number,
+    theta_rad: number,
+    z_star: number,
+    fp = DEFAULTS.fp,
+    H = DEFAULTS.H,
+    Cd = DEFAULTS.Cd
+    ): number {
+    const sinT = Math.sin(theta_rad);
+    const rho_zstar = atmosphericDensity(z_star, DEFAULTS.rho0, H);
+    
+    // Equation (16): l = L₀ * sin(θ) * √(ρᵢ / (Cd * ρ(z*)))
+    const l = L0 * sinT * Math.sqrt(rho_i / (Cd * rho_zstar));
+    
+    // Equation (18): zb = z* - 2H * ln(1 + √(fp² - 1) * l/(2H))
+    const argument = 1 + Math.sqrt(fp * fp - 1) * l / (2 * H);
+    
+    // Check if argument is valid (must be > 0 for logarithm)
+    if (argument <= 0) {
+        // This shouldn't happen with proper parameters, but handle gracefully
+        console.warn("Invalid argument for airburst calculation, using simplified approximation");
+        return z_star - H * Math.log(fp);
+    }
+    
+    const zb = z_star - 2 * H * Math.log(argument);
+    
+    return zb;
 }
 
 // fireball radius
@@ -139,7 +179,7 @@ export function transientCrater(L0: number, rho_i: number, v_i: number, theta_ra
     dfr = dtc;
   } else {
     Dfr = 1.17 * Math.pow(Dtc, 1.13) / Math.pow(3200, 0.13);
-    dfr = 0.4 * Math.pow(Dfr, 0.3);
+    dfr = 1000*(0.294 * Math.pow(Dfr/1000, 0.301));
   }
   return { Dtc, dtc, Dfr, dfr };
 }
@@ -235,7 +275,7 @@ export function computeImpactEffects(inputs: Damage_Inputs): Damage_Results {
 
   // breakup and airburst
   const { If, z_star, breakup } = breakupIfAndZstar(L0, rho_i, v0, theta_rad, Cd, H, rho0);
-  const zb = breakup ? pancakeAirburstAltitude(z_star, DEFAULTS.fp, H) : 0;
+  const zb = breakup ? pancakeAirburstAltitude(L0, rho_i, z_star, theta_rad, z_star) : 0;
   const airburst = breakup && zb > 0;
 
   // choose impact velocity for cratering

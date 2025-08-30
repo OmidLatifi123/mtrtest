@@ -32,22 +32,6 @@ type EffectsState = {
 const IMPACT_TIME = 0.40; // timeline point where impact occurs (0..1)
 
 
-
-// Helper to format large numbers
-const formatNum = (n: number): string =>
-  n >= 1e12 ? (n / 1e12).toFixed(1) + 'T' :
-  n >= 1e9 ? (n / 1e9).toFixed(1) + 'B' :
-  n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' :
-  n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' :
-  n >= 1 ? n.toFixed(1) : n.toExponential(2);
-
-// Format energy with proper units
-const formatEnergy = (mt: number): string =>
-  mt >= 1000 ? (mt / 1000).toFixed(1) + ' Gt' :
-  mt >= 1 ? mt.toFixed(1) + ' Mt' :
-  mt >= 0.001 ? (mt * 1000).toFixed(1) + ' kt' :
-  (mt * 1000000).toFixed(1) + ' t';
-
 // Format asteroid name
 const formatAsteroidName = (id: string): string =>
   (id || 'Demo Meteor')

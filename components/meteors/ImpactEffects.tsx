@@ -4,8 +4,7 @@ import styles from './ImpactEffects.module.css';
 // Helper function to format distances
 function formatDistance(meters: number | null): string {
   if (meters === null) return 'N/A';
-  if (meters >= 1000000) return `${(meters / 1000000).toFixed(1)} km`;
-  if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
+  if (meters >= 1000) return `${(meters / 1000).toFixed(2)} km`;
   return `${meters.toFixed(0)} m`;
 }
 
@@ -19,9 +18,13 @@ function formatEnergy(joules: number): string {
 
 interface ImpactEffectsProps {
   effects: {
+    E_J: number;
     E_Mt: number;
-    airburst: boolean;
+    Tre_years: number;
+    m_kg: number;
+    v_surface_intact: number;
     zb_breakup: number;
+    airburst: boolean;
     v_impact_for_crater: number;
     Rf_m: number | null;
     r_clothing_m: number;
@@ -29,7 +32,13 @@ interface ImpactEffectsProps {
     r_3rd_burn_m: number;
     Dtc_m: number | null;
     dtc_m: number | null;
+    Dfr_m: number | null;
+    dfr_m: number | null;
+    Vtc_km3: number | null;
+    Vtc_over_Ve: number | null;
     earth_effect: 'destroyed' | 'strongly_disturbed' | 'negligible_disturbed';
+    M: number | null;
+    radius_M_ge_7_5_m: number | null;
     airblast_radius_building_collapse_m: number | null;
     airblast_radius_glass_shatter_m: number | null;
   };
@@ -39,6 +48,8 @@ interface ImpactEffectsProps {
 
 export default function ImpactEffects({ effects, impactLat, impactLon }: ImpactEffectsProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState('overview');
+  
   // Get descriptive text for earth effect
   const earthEffectText = {
     destroyed: 'Global Catastrophe - Earth Severely Affected',
@@ -61,89 +72,212 @@ export default function ImpactEffects({ effects, impactLat, impactLon }: ImpactE
       >
         {isCollapsed ? '◀' : '▶'}
       </button>
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>Impact Overview</div>
-        <div className={styles.dataRow}>
-          <span className={styles.label}>Location</span>
-          <span className={styles.value}>{impactLat.toFixed(1)}°N, {impactLon.toFixed(1)}°E</span>
-        </div>
-        <div className={styles.dataRow}>
-          <span className={styles.label}>Impact Energy</span>
-          <span className={styles.value}>{formatEnergy(effects.E_Mt * 4.184e15)}</span>
-        </div>
-        <div className={styles.impactType + ' ' + (effects.airburst ? styles.airburst : styles.surface)}>
-          {effects.airburst ? '☁️ Airburst' : '🌋 Surface Impact'}
-          {effects.airburst && (
-            <span> at {formatDistance(effects.zb_breakup)} altitude</span>
-          )}
-        </div>
+      <div className={styles.tabList}>
+        <button 
+          className={`${styles.tab} ${activeTab === 'overview' ? styles.active : ''}`}
+          onClick={() => setActiveTab('overview')}
+        >
+          Overview
+        </button>
+        <button 
+          className={`${styles.tab} ${activeTab === 'thermal' ? styles.active : ''}`}
+          onClick={() => setActiveTab('thermal')}
+        >
+          Thermal
+        </button>
+        <button 
+          className={`${styles.tab} ${activeTab === 'blast' ? styles.active : ''}`}
+          onClick={() => setActiveTab('blast')}
+        >
+          Wave Blast
+        </button>
+        <button 
+          className={`${styles.tab} ${activeTab === 'crater' ? styles.active : ''}`}
+          onClick={() => setActiveTab('crater')}
+        >
+          Crater
+        </button>
+        <button 
+          className={`${styles.tab} ${activeTab === 'seismic' ? styles.active : ''}`}
+          onClick={() => setActiveTab('seismic')}
+        >
+          Seismic
+        </button>
       </div>
 
-      {/* Thermal Effects */}
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>Thermal Effects</div>
-        <div className={styles.distanceGrid}>
-          {effects.r_3rd_burn_m && (
-            <div className={styles.distanceCard}>
-              <div className={styles.distanceValue}>{formatDistance(effects.r_3rd_burn_m)}</div>
-              <div className={styles.distanceLabel}>Third Degree Burns</div>
+      <div className={styles.scrollContent}>
+        {activeTab === 'overview' && (
+          <div className={styles.section}>
+            <div className={styles.dataRow}>
+              <span className={styles.label}>Location</span>
+              <span className={styles.value}>{impactLat.toFixed(1)}°N, {impactLon.toFixed(1)}°E</span>
             </div>
-          )}
-          {effects.r_2nd_burn_m && (
-            <div className={styles.distanceCard}>
-              <div className={styles.distanceValue}>{formatDistance(effects.r_2nd_burn_m)}</div>
-              <div className={styles.distanceLabel}>Second Degree Burns</div>
+            <div className={styles.dataRow}>
+              <span className={styles.label}>Mass</span>
+              <span className={styles.value}>{(effects.m_kg / 1e6).toFixed(1)} tonnes</span>
             </div>
-          )}
-        </div>
-      </div>
+            <div className={styles.dataRow}>
+              <span className={styles.label}>Energy</span>
+              <span className={styles.value}>{formatEnergy(effects.E_J)}</span>
+            </div>
+            <div className={styles.dataRow}>
+              <span className={styles.label}>Recurrence Period</span>
+              <span className={styles.value}>{effects.Tre_years.toFixed(1)} years</span>
+            </div>
+            <div className={styles.impactType + ' ' + (effects.airburst ? styles.airburst : styles.surface)}>
+              {effects.airburst ? '☁️ Airburst' : '🌋 Surface Impact'}
+              {effects.airburst && (
+                <span> at {formatDistance(effects.zb_breakup)} altitude</span>
+              )}
+            </div>
+            <div className={styles.dataRow}>
+              <span className={styles.label}>Surface Velocity</span>
+              <span className={styles.value}>{(effects.v_surface_intact/1000).toFixed(1)} km/s</span>
+            </div>
+            <div className={styles.dataRow}>
+              <span className={styles.label}>Impact Velocity</span>
+              <span className={styles.value}>{(effects.v_impact_for_crater/1000).toFixed(1)} km/s</span>
+            </div>
+          </div>
+        )}
 
-      {/* Blast Effects */}
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>Blast Wave Effects</div>
-        <div className={styles.distanceGrid}>
-          {effects.airblast_radius_building_collapse_m && (
-            <div className={styles.distanceCard}>
-              <div className={styles.distanceValue}>
-                {formatDistance(effects.airblast_radius_building_collapse_m)}
+        {activeTab === 'thermal' && (
+          <div className={styles.section}>
+            <div className={styles.sectionInfo}>
+              Thermal effects are caused by the intense heat generated during impact or airburst.
+            </div>
+            {effects.Rf_m && (
+              <div className={styles.dataRow}>
+                <span className={styles.label}>Fireball Radius</span>
+                <span className={styles.value}>{formatDistance(effects.Rf_m)}</span>
               </div>
-              <div className={styles.distanceLabel}>Building Collapse</div>
+            )}
+            <div className={styles.distanceGrid}>
+              {effects.r_3rd_burn_m && (
+                <div className={styles.distanceCard}>
+                  <div className={styles.distanceValue}>{formatDistance(effects.r_3rd_burn_m)}</div>
+                  <div className={styles.distanceLabel}>Third Degree Burns</div>
+                  <div className={styles.distanceDesc}>100% thickness burns, requiring immediate medical attention</div>
+                </div>
+              )}
+              {effects.r_2nd_burn_m && (
+                <div className={styles.distanceCard}>
+                  <div className={styles.distanceValue}>{formatDistance(effects.r_2nd_burn_m)}</div>
+                  <div className={styles.distanceLabel}>Second Degree Burns</div>
+                  <div className={styles.distanceDesc}>Partial thickness burns with blistering</div>
+                </div>
+              )}
             </div>
-          )}
-          {effects.airblast_radius_glass_shatter_m && (
-            <div className={styles.distanceCard}>
-              <div className={styles.distanceValue}>
-                {formatDistance(effects.airblast_radius_glass_shatter_m)}
-              </div>
-              <div className={styles.distanceLabel}>Window Breakage</div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Crater Info (if surface impact) */}
-      {!effects.airburst && effects.Dtc_m && (
-        <div className={styles.section}>
-          <div className={styles.sectionTitle}>Crater Formation</div>
-          <div className={styles.distanceGrid}>
-            <div className={styles.distanceCard}>
-              <div className={styles.distanceValue}>{formatDistance(effects.Dtc_m)}</div>
-              <div className={styles.distanceLabel}>Crater Diameter</div>
-            </div>
-            {effects.dtc_m && (
-              <div className={styles.distanceCard}>
-                <div className={styles.distanceValue}>{formatDistance(effects.dtc_m)}</div>
-                <div className={styles.distanceLabel}>Crater Depth</div>
+            {effects.r_clothing_m && (
+              <div className={styles.dataRow}>
+                <span className={styles.label}>Clothing Ignition</span>
+                <span className={styles.value}>{formatDistance(effects.r_clothing_m)}</span>
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Global Effect */}
-      <div className={`${styles.earthEffect} ${earthEffectClass}`}>
-        {earthEffectText}
+        {activeTab === 'blast' && (
+          <div className={styles.section}>
+            <div className={styles.sectionInfo}>
+              The wave blast creates a sudden pressure increase that can damage structures and cause injuries.
+            </div>
+            <div className={styles.distanceGrid}>
+              {effects.airblast_radius_building_collapse_m && (
+                <div className={styles.distanceCard}>
+                  <div className={styles.distanceValue}>
+                    {formatDistance(effects.airblast_radius_building_collapse_m)}
+                  </div>
+                  <div className={styles.distanceLabel}>Building Collapse</div>
+                  <div className={styles.distanceDesc}>Complete destruction of buildings</div>
+                </div>
+              )}
+              {effects.airblast_radius_glass_shatter_m && (
+                <div className={styles.distanceCard}>
+                  <div className={styles.distanceValue}>
+                    {formatDistance(effects.airblast_radius_glass_shatter_m)}
+                  </div>
+                  <div className={styles.distanceLabel}>Window Breakage</div>
+                  <div className={styles.distanceDesc}>Glass windows shatter due to pressure wave</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'crater' && (
+          <div className={styles.section}>
+            <div className={styles.sectionInfo}>
+              Crater formation occurs in two phases: initial transient crater followed by final crater.
+            </div>
+            {effects.Dtc_m && (
+              <>
+                <div className={styles.dataRow}>
+                  <span className={styles.label}>Transient Diameter</span>
+                  <span className={styles.value}>{formatDistance(effects.Dtc_m)}</span>
+                </div>
+                {effects.dtc_m && (
+                  <div className={styles.dataRow}>
+                    <span className={styles.label}>Transient Depth</span>
+                    <span className={styles.value}>{formatDistance(effects.dtc_m)}</span>
+                  </div>
+                )}
+              </>
+            )}
+            {effects.Dfr_m && (
+              <>
+                <div className={styles.dataRow}>
+                  <span className={styles.label}>Final Diameter</span>
+                  <span className={styles.value}>{formatDistance(effects.Dfr_m)}</span>
+                </div>
+                {effects.dfr_m && (
+                  <div className={styles.dataRow}>
+                    <span className={styles.label}>Final Depth</span>
+                    <span className={styles.value}>{formatDistance(effects.dfr_m)}</span>
+                  </div>
+                )}
+              </>
+            )}
+            {effects.Vtc_km3 && (
+              <div className={styles.dataRow}>
+                <span className={styles.label}>Excavated Volume</span>
+                <span className={styles.value}>{effects.Vtc_km3.toFixed(2)} km³</span>
+              </div>
+            )}
+            {effects.Vtc_over_Ve && (
+              <div className={styles.dataRow}>
+                <span className={styles.label}>Earth Volume Ratio</span>
+                <span className={styles.value}>{(effects.Vtc_over_Ve * 100).toFixed(6)}%</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'seismic' && (
+          <div className={styles.section}>
+            <div className={styles.sectionInfo}>
+              The impact generates seismic waves similar to an earthquake.
+            </div>
+            {effects.M && (
+              <div className={styles.dataRow}>
+                <span className={styles.label}>Richter Magnitude</span>
+                <span className={styles.value}>{effects.M.toFixed(1)}</span>
+              </div>
+            )}
+            {effects.radius_M_ge_7_5_m && (
+              <div className={styles.dataRow}>
+                <span className={styles.label}>EQ Damage Radius</span>
+                <span className={styles.value}>{formatDistance(effects.radius_M_ge_7_5_m)}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Global Effect - shown on all tabs */}
+        <div className={`${styles.earthEffect} ${earthEffectClass}`}>
+          {earthEffectText}
+        </div>
       </div>
     </div>
-  );
+    );
 }
