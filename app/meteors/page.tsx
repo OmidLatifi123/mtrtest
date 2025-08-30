@@ -158,6 +158,7 @@ export default function AsteroidViewer() {
   const router = useRouter()
 
   const [impactSpeed, setImpactSpeed] = useState(20); // Speed in km/s
+  const [impactAngle, setImpactAngle] = useState(90); // Angle in degrees
 
 
   const getGlbFile = (name: string) => {
@@ -333,10 +334,31 @@ const info = asteroidInfo[selected as keyof typeof asteroidInfo];
               </label>
               <input
                 type="range"
-                min="20"
-                max="100"
+                min="11"
+                max="73"
                 value={impactSpeed}
                 onChange={(e) => setImpactSpeed(Number(e.target.value))}
+                style={{
+                  width: '100%',
+                  accentColor: '#00ccff',
+                  background: '#18191c',
+                  height: '8px',
+                  borderRadius: '4px',
+                  appearance: 'none',
+                  outline: 'none'
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', color: '#00ccff' }}>
+                Impact Angle: {impactAngle}°
+              </label>
+              <input
+                type="range"
+                min="5"
+                max="90"
+                value={impactAngle}
+                onChange={(e) => setImpactAngle(Number(e.target.value))}
                 style={{
                   width: '100%',
                   accentColor: '#00ccff',
@@ -362,7 +384,7 @@ const info = asteroidInfo[selected as keyof typeof asteroidInfo];
                 }
                 // Convert speed from km/s to m/s
                 const speedMs = impactSpeed * 1000;
-                router.push(`/meteors/impact?mass=${weight}&diameter=${sizeMeters}&speed=${speedMs}&name=${selected}&angle=90&density=${density}`);
+                router.push(`/meteors/impact?mass=${weight}&diameter=${sizeMeters}&speed=${speedMs}&name=${selected}&angle=${impactAngle}&density=${density}`);
 
               }}
             >
