@@ -3,7 +3,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Html, Stars } from '@react-three/drei';
-import * as THREE from 'three';
 import EarthImpact from './EarthImpact'; // Adjust path as needed
 import ImpactEffects from './ImpactEffects';
 import styles from './MeteorImpactPage.module.css';
@@ -39,8 +38,8 @@ const formatAsteroidName = (id: string): string =>
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
 export default function MeteorImpactPage({ meteor }: { meteor: Meteor }) {
-  const [impactLat, setImpactLat] = useState(20);
-  const [impactLon, setImpactLon] = useState(-45);
+  const [impactLat, setImpactLat] = useState(44.60);
+  const [impactLon, setImpactLon] = useState(79.47);
   const [t, setT] = useState(0);
   const [playing, setPlaying] = useState(true);
 
@@ -164,7 +163,7 @@ export default function MeteorImpactPage({ meteor }: { meteor: Meteor }) {
         camera={{ fov: 50, position: [0, 1.8, 3.5] }}
         style={{ background: 'radial-gradient(circle, #001122 0%, #000408 100%)' }}
       >
-        <ambientLight intensity={0.15} />
+        <ambientLight intensity={0.75} />
         <directionalLight
           position={[8, 10, 6]}
           intensity={1.8}
@@ -183,7 +182,7 @@ export default function MeteorImpactPage({ meteor }: { meteor: Meteor }) {
           enablePan
           enableZoom
           enableRotate
-          minDistance={2.2}
+          minDistance={1.6}
           maxDistance={8}
           maxPolarAngle={Math.PI}
         />
@@ -199,6 +198,7 @@ export default function MeteorImpactPage({ meteor }: { meteor: Meteor }) {
         >
           <EarthImpact
             meteor={meteor}
+            damage={damage}
             impact={{ lat: impactLat, lon: impactLon }}
             t={t}
             onImpactSelect={(la, lo) => { setImpactLat(la); setImpactLon(lo); }}
