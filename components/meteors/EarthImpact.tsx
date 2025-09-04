@@ -8,7 +8,7 @@ import { GLTF } from 'three-stdlib';
 
 import { getGlbFile } from './asteroidGLB';
 import AsteroidExplosion from './AsteroidExplosion';
-import Earth from './Earth';
+import Earth from "@/components/Earth";
 import { Damage_Results } from './DamageValues';
 import { computeWaveRadii } from './utils/waveRadii';
 
@@ -49,7 +49,7 @@ const EARTH_R_M = 6371000;
 type GLTFResult = GLTF & { scene: THREE.Group };
 
 function surfacemToChordUnits(m: number): number {
-  const maxm = Math.min(m, EARTH_R_M * 0.5);
+  const maxm = Math.min(m, EARTH_R_M * 0.9);
   const theta = maxm / EARTH_R_M;
   return EARTH_R * theta * 0.8;
 }
