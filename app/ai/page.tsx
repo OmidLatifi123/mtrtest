@@ -244,11 +244,11 @@ const Page: React.FC = () => {
               </summary>
               <div className="max-h-64 overflow-y-auto p-2 space-y-3 text-sm">
                 {[
-                  { key: "nuclearDetonation", label: "Nuclear Option", icon: "☢️", description: "Detonate near the asteroid to deflect with explosive force." },
-                  { key: "laserAblation", label: "Laser Defense", icon: "🔦", description: "Heat the surface with lasers to vaporize material and push it." },
-                  { key: "gravityTractor", label: "Gravity Tractor", icon: "🛸", description: "Use a spacecraft’s gravity to slowly tug the asteroid’s path." },
-                  { key: "ionBeamShepherd", label: "Ion Beam", icon: "🕳️", description: "Fire a steady ion stream to nudge the asteroid over time." },
-                  { key: "kineticImpactor", label: "Kinetic Impactor", icon: "🚀", description: "Crash a high-speed probe to alter the asteroid’s trajectory." },
+                  { key: "nuclearDetonation", label: "Nuclear Option", icon: "☢️", description: "Detonate near the asteroid to deflect with explosive force" },
+                  { key: "laserAblation", label: "Laser Defense", icon: "🔦", description: "Heat the surface with lasers to vaporize material and push it" },
+                  { key: "gravityTractor", label: "Gravity Tractor", icon: "🛸", description: "Use a spacecraft’s gravity to slowly tug the asteroid’s path" },
+                  { key: "ionBeamShepherd", label: "Ion Beam", icon: "🕳️", description: "Fire a steady ion stream to nudge the asteroid over time" },
+                  { key: "kineticImpactor", label: "Kinetic Impactor", icon: "🚀", description: "Crash a high-speed probe to alter the asteroid’s trajectory" },
 
                 ].map(({ key, label, icon, description }) => (
                   <div

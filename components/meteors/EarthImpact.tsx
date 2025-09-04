@@ -18,6 +18,8 @@ type Meteor = {
   diameter: number;
   speed: number;
   angle: number;
+  density?: number;
+  isCustom?: boolean;
 };
 
 type Impact = { lat: number; lon: number; };
@@ -71,14 +73,14 @@ export default function EarthImpact({
     [impact, meteor.angle]
   );
 
-  // Asteroid model
-  const modelUrl = getGlbFile(meteor.name || '');
-  const gltf = useGLTF(modelUrl) as GLTFResult;
+  // Asteroid model (only load GLB for non-custom asteroids)
+  const modelUrl = meteor.isCustom ? '' : getGlbFile(meteor.name || '');
+  const gltf = meteor.isCustom ? null : (useGLTF(modelUrl) as GLTFResult);
   const asteroidRef = useRef<THREE.Group>(null!);
 
   // Asteroid size
   const desiredAsteroidRadiusUnits = useMemo(() => {
-    const diameterKm = Math.max(meteor.diameter / 100, 0);
+    const diameterKm = Math.max(meteor.diameter / 1000, 0); // diameter is in meters, convert to km
     const radiusKm = diameterKm / 2;
     const minVisible = 0.002 * EARTH_R;
     const maxVisible = 0.05 * EARTH_R;
@@ -87,6 +89,11 @@ export default function EarthImpact({
   }, [meteor.diameter]);
 
   const asteroidScale = useMemo(() => {
+    if (meteor.isCustom) {
+      // For custom asteroids, we use the sphere directly at the desired size
+      return 1;
+    }
+    if (!gltf) return 1;
     const box = new THREE.Box3().setFromObject(gltf.scene);
     const sphere = new THREE.Sphere();
     box.getBoundingSphere(sphere);
@@ -95,7 +102,25 @@ export default function EarthImpact({
       current = 2;
     }
     return desiredAsteroidRadiusUnits / current;
-  }, [gltf.scene, desiredAsteroidRadiusUnits]);
+  }, [gltf?.scene, desiredAsteroidRadiusUnits, meteor.isCustom]);
+
+  // Get material color based on asteroid type
+  const getAsteroidMaterial = () => {
+    if (!meteor.isCustom) return null;
+    
+    const materialName = meteor.name?.split('_')[1] || 'stone';
+    switch (materialName) {
+      case 'iron':
+        return { color: '#8C7853', metalness: 0.8, roughness: 0.3 };
+      case 'ice':
+        return { color: '#B8E6FF', metalness: 0.1, roughness: 0.1 };
+      case 'stone':
+      default:
+        return { color: '#8B7355', metalness: 0.2, roughness: 0.8 };
+    }
+  };
+
+  const customMaterial = getAsteroidMaterial();
 
   // Flight path
   const asteroidPos = useMemo(() => {
@@ -165,7 +190,21 @@ export default function EarthImpact({
       {/* Asteroid flight */}
       {t < impactTime && (
         <group ref={asteroidRef} position={asteroidPos}>
-          <primitive object={gltf.scene} scale={asteroidScale * 2} />
+          {/* Render custom sphere or GLB model */}
+          {meteor.isCustom ? (
+            <mesh>
+              <sphereGeometry args={[desiredAsteroidRadiusUnits * 2, 32, 32]} />
+              <meshStandardMaterial
+                color={customMaterial?.color || '#8B7355'}
+                metalness={customMaterial?.metalness || 0.2}
+                roughness={customMaterial?.roughness || 0.8}
+              />
+            </mesh>
+          ) : (
+            gltf && <primitive object={gltf.scene} scale={asteroidScale * 2} />
+          )}
+          
+          {/* Atmospheric heating effects */}
           <mesh>
             <sphereGeometry args={[desiredAsteroidRadiusUnits * 1.8, 32, 32]} />
             <meshBasicMaterial
