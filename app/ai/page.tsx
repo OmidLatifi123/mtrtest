@@ -1,4 +1,3 @@
-// ai/page.tsx
 "use client";
 import React, { useRef, useState, useEffect } from "react";
 import SpaceScene from "@/components/SpaceScene";
@@ -13,7 +12,8 @@ type EffectKey =
   | "nuclearDetonation"
   | "gravityTractor"
   | "laserAblation"
-  | "ionBeamShepherd";
+  | "ionBeamShepherd"
+  | "analyze";
 
 interface ChatMessage {
   id: string;
@@ -29,6 +29,7 @@ const EFFECTS_CONFIG = {
   gravityTractor: { icon: "🛸", label: "Gravity Tractor" },
   laserAblation: { icon: "🔦", label: "Laser Ablation" },
   ionBeamShepherd: { icon: "⚡", label: "Ion Beam Shepherd" },
+  analyze: { icon: "🔍", label: "Analyze Target" },
 } as const;
 
 // === Parse Effects from Response ===
@@ -74,6 +75,16 @@ const parseEffectsFromResponse = (response: string): EffectKey[] => {
       "shepherd",
       "plasma thruster",
     ],
+    analyze: [
+      "analyze",
+      "scan",
+      "examine",
+      "study",
+      "investigate",
+      "assess",
+      "evaluate",
+      "survey",
+    ],
   };
 
   const detectedEffects: EffectKey[] = [];
@@ -98,7 +109,7 @@ const Page: React.FC = () => {
     {
       id: "1",
       content:
-        "Welcome to Asteroid Defense Simulator! I'm your planetary defense AI. Describe a strategy to deflect the incoming asteroid — kinetic impact, nuclear detonation, gravity tractor, laser ablation, or other methods — and I'll simulate it in real time.",
+        "Welcome to Asteroid Defense Simulator! I'm your planetary defense AI. Describe a strategy to deflect the incoming asteroid — kinetic impact, nuclear detonation, gravity tractor, laser ablation, ion beam shepherd, or analyze the target first — and I'll simulate it in real time.",
       role: "assistant",
     },
   ]);
@@ -244,11 +255,12 @@ const Page: React.FC = () => {
               </summary>
               <div className="max-h-64 overflow-y-auto p-2 space-y-3 text-sm">
                 {[
+                  { key: "analyze", label: "Analyze Target", icon: "🔍", description: "Scan and gather detailed information about the asteroid" },
                   { key: "nuclearDetonation", label: "Nuclear Option", icon: "☢️", description: "Detonate near the asteroid to deflect with explosive force" },
                   { key: "laserAblation", label: "Laser Defense", icon: "🔦", description: "Heat the surface with lasers to vaporize material and push it" },
-                  { key: "gravityTractor", label: "Gravity Tractor", icon: "🛸", description: "Use a spacecraft’s gravity to slowly tug the asteroid’s path" },
-                  { key: "ionBeamShepherd", label: "Ion Beam", icon: "🕳️", description: "Fire a steady ion stream to nudge the asteroid over time" },
-                  { key: "kineticImpactor", label: "Kinetic Impactor", icon: "🚀", description: "Crash a high-speed probe to alter the asteroid’s trajectory" },
+                  { key: "gravityTractor", label: "Gravity Tractor", icon: "🛸", description: "Use a spacecraft's gravity to slowly tug the asteroid's path" },
+                  { key: "ionBeamShepherd", label: "Ion Beam Shepherd", icon: "⚡", description: "Fire a steady ion stream to nudge the asteroid over time" },
+                  { key: "kineticImpactor", label: "Kinetic Impactor", icon: "🚀", description: "Crash a high-speed probe to alter the asteroid's trajectory" },
 
                 ].map(({ key, label, icon, description }) => (
                   <div
@@ -273,16 +285,13 @@ const Page: React.FC = () => {
                       }
                       className="bg-blue-600 hover:bg-blue-700 text-xs px-3 py-1 rounded-md self-start"
                     >
-                      Launch
+                      {key === "analyze" ? "Scan" : "Launch"}
                     </button>
                   </div>
                 ))}
               </div>
             </details>
           </div>
-
-
-
 
           {effectsActiveCount > 0 && (
             <button
@@ -452,7 +461,7 @@ const Page: React.FC = () => {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Try: 'Launch a kinetic impactor' or 'Use a nuclear detonation'"
+                        placeholder="Try: 'Analyze the asteroid' or 'Launch a kinetic impactor'"
                         className="flex-1 bg-gray-800 border border-gray-600 rounded-xl px-4 py-2 text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                         rows={2}
                         disabled={loading}
