@@ -14,6 +14,7 @@ import LaserDefense from "@/components/LaserDefense";
 import NuclearDetonation from "@/components/NuclearDetonation";
 import GravityTractor from "@/components/GravityTractor";
 import AsteroidAnalyzer from "@/components/AsteroidAnalyzer";
+import IonBeamShepherd from "@/components/ionBeamShepherd";
 
 // === Types ===
 // IMPORTANT: Keep this in sync with ai/page.tsx EFFECTS_CONFIG keys
@@ -48,7 +49,7 @@ const StationaryAsteroid = React.forwardRef<
     if (!groupRef.current) return;
 
     // Fixed position relative to Earth with offset for deflections
-    const basePosition = new THREE.Vector3(35, 0, 0); // Stationary position
+    const basePosition = new THREE.Vector3(50, 0, 0); // Stationary position
     
     // Apply persistent deflection offset
     groupRef.current.position.copy(basePosition.clone().add(offset));
@@ -114,89 +115,6 @@ const CameraFollowAsteroid: React.FC<{
   });
 
   return null;
-};
-
-// === Ion Beam Shepherd Component ===
-const IonBeamShepherd: React.FC<{
-  asteroidPosition: THREE.Vector3;
-  isActive: boolean;
-  onComplete: () => void;
-  onDeflect: (delta: THREE.Vector3) => void;
-}> = ({ asteroidPosition, isActive, onComplete, onDeflect }) => {
-  const beamRef = useRef<THREE.Group>(null);
-  const [phase, setPhase] = useState<'approach' | 'beam' | 'deflect' | 'complete'>('approach');
-  const startTimeRef = useRef<number>(0);
-
-  useFrame(({ clock }) => {
-    if (!isActive || !beamRef.current) return;
-
-    const time = clock.getElapsedTime();
-    if (startTimeRef.current === 0) {
-      startTimeRef.current = time;
-    }
-
-    const elapsed = time - startTimeRef.current;
-
-    switch (phase) {
-      case 'approach':
-        // Position shepherd craft near asteroid
-        const approachPos = asteroidPosition.clone().add(new THREE.Vector3(5, 2, 0));
-        beamRef.current.position.copy(approachPos);
-        
-        if (elapsed > 2) {
-          setPhase('beam');
-        }
-        break;
-
-      case 'beam':
-        // Show ion beam effect
-        if (elapsed > 5) {
-          setPhase('deflect');
-        }
-        break;
-
-      case 'deflect':
-        // Apply gradual deflection
-        const deflectionForce = new THREE.Vector3(0.1, 0, 0);
-        onDeflect(deflectionForce);
-        
-        if (elapsed > 8) {
-          setPhase('complete');
-        }
-        break;
-
-      case 'complete':
-        onComplete();
-        break;
-    }
-  });
-
-  if (!isActive) return null;
-
-  return (
-    <group ref={beamRef}>
-      {/* Ion Beam Shepherd Craft */}
-      <mesh>
-        <boxGeometry args={[1, 0.5, 2]} />
-        <meshStandardMaterial color="#4a90e2" emissive="#001133" />
-      </mesh>
-      
-      {/* Ion Beam Effect */}
-      {(phase === 'beam' || phase === 'deflect') && (
-        <mesh position={[-2.5, 0, 0]} rotation={[0, 0, Math.PI/2]}>
-          <cylinderGeometry args={[0.1, 0.1, 5]} />
-          <meshBasicMaterial color="#00ffff" transparent opacity={0.7} />
-        </mesh>
-      )}
-      
-      {/* Particle effects */}
-      {(phase === 'beam' || phase === 'deflect') && (
-        <points>
-          <pointsMaterial color="#00ffff" size={0.1} />
-        </points>
-      )}
-    </group>
-  );
 };
 
 // === Scene Content ===
@@ -270,17 +188,31 @@ const SceneContent: React.FC<{
 
   // Handle gravity tractor
   React.useEffect(() => {
-    if (effects.gravityTractor && !gravityTractorActive && asteroidVisible) {
+  if (effects.gravityTractor && asteroidVisible) {
+    if (!gravityTractorActive) {
       setGravityTractorActive(true);
     }
-  }, [effects.gravityTractor, gravityTractorActive, asteroidVisible]);
+  } else {
+    // 🚀 turn it off & reset when effect clears
+    if (gravityTractorActive) {
+      setGravityTractorActive(false);
+      setDeflectionOffset(new THREE.Vector3());
+    }
+  }
+}, [effects.gravityTractor, gravityTractorActive, asteroidVisible]);
+
 
   // Handle ion beam shepherd
-  React.useEffect(() => {
-    if (effects.ionBeamShepherd && !ionBeamActive && asteroidVisible) {
-      setIonBeamActive(true);
-    }
-  }, [effects.ionBeamShepherd, ionBeamActive, asteroidVisible]);
+React.useEffect(() => {
+  if (effects.ionBeamShepherd && !ionBeamActive && asteroidVisible) {
+    setIonBeamActive(true);
+  } else if (!effects.ionBeamShepherd && ionBeamActive) {
+    // 🚀 turn it off & reset
+    setIonBeamActive(false);
+    setDeflectionOffset(new THREE.Vector3()); // reset asteroid offset
+  }
+}, [effects.ionBeamShepherd, ionBeamActive, asteroidVisible]);
+
 
   // Handle analysis
   React.useEffect(() => {
@@ -326,7 +258,7 @@ const SceneContent: React.FC<{
     console.log("Earth double-clicked");
   }, []);
 
-  return (
+   return (
     <>
       <Stars count={15000} fade speed={0.1} radius={200} depth={100} />
 
@@ -347,7 +279,7 @@ const SceneContent: React.FC<{
         <Earth onDoubleClick={handleEarthDoubleClick} />
       </group>
 
-      {/* Asteroid (stationary with possible deflection offset) */}
+      {/* Asteroid */}
       <StationaryAsteroid
         ref={asteroidRef}
         onAsteroidClick={onAsteroidClick}
@@ -361,7 +293,7 @@ const SceneContent: React.FC<{
         <Sun targetRef={earthRef as React.RefObject<THREE.Object3D>} />
       </group>
 
-      {/* Kinetic Impactor */}
+      {/* Effects */}
       {asteroidVisible && (
         <KineticImpactor
           isActive={effects.kineticImpactor}
@@ -370,7 +302,6 @@ const SceneContent: React.FC<{
         />
       )}
 
-      {/* Laser Defense */}
       {asteroidVisible && (
         <LaserDefense
           isActive={effects.laserAblation}
@@ -380,7 +311,6 @@ const SceneContent: React.FC<{
         />
       )}
 
-      {/* Nuclear Detonation */}
       <NuclearDetonation
         position={nuclearPosition}
         isActive={nuclearActive}
@@ -388,7 +318,6 @@ const SceneContent: React.FC<{
         onDestroy={handleNuclearDestroy}
       />
 
-      {/* Gravity Tractor */}
       {asteroidVisible && (
         <GravityTractor
           asteroidPosition={currentAsteroidPosition}
@@ -398,22 +327,19 @@ const SceneContent: React.FC<{
         />
       )}
 
-      {/* Ion Beam Shepherd */}
       {asteroidVisible && (
-        <IonBeamShepherd
-          asteroidPosition={currentAsteroidPosition}
-          isActive={ionBeamActive}
-          onComplete={handleIonBeamComplete}
-          onDeflect={(delta) => setDeflectionOffset((prev) => prev.clone().add(delta))}
-        />
+<IonBeamShepherd
+  asteroidPosition={currentAsteroidPosition}
+  isActive={ionBeamActive}
+  asteroidRadius={2.0}
+  deflectionStrength={0.08}
+  onDeflect={(delta) => setDeflectionOffset(prev => prev.clone().add(delta))}
+  onComplete={handleIonBeamComplete}
+/>
+
       )}
 
-      {/* Asteroid Analyzer */}
-      <AsteroidAnalyzer
-        isActive={analysisActive}
-        asteroidPosition={currentAsteroidPosition}
-        onComplete={handleAnalysisComplete}
-      />
+      {/* 🚫 Removed AsteroidAnalyzer here */}
 
       <CameraFollowAsteroid asteroidRef={asteroidRef} isFollowing={followingAsteroid} />
     </>
@@ -428,16 +354,25 @@ const SpaceScene: React.FC<SpaceSceneProps> = ({
   onAsteroidClick,
 }) => {
   return (
-    <Canvas camera={{ position: [40, 20, 30], fov: 50 }}>
-      <Suspense fallback={null}>
-        <SceneContent
-          effects={effects}
-          followingAsteroid={followingAsteroid}
-          asteroidClicked={asteroidClicked}
-          onAsteroidClick={onAsteroidClick}
-        />
-      </Suspense>
-    </Canvas>
+    <>
+      <Canvas camera={{ position: [40, 20, 30], fov: 50 }}>
+        <Suspense fallback={null}>
+          <SceneContent
+            effects={effects}
+            followingAsteroid={followingAsteroid}
+            asteroidClicked={asteroidClicked}
+            onAsteroidClick={onAsteroidClick}
+          />
+        </Suspense>
+      </Canvas>
+
+      {/* ✅ Only Analyzer overlay here */}
+      <AsteroidAnalyzer
+        isActive={effects.analyze}
+        asteroidPosition={new THREE.Vector3(35, 0, 0)} // replace with live position if needed
+        onComplete={() => console.log("Analysis complete")}
+      />
+    </>
   );
 };
 

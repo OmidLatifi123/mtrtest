@@ -255,7 +255,7 @@ const Page: React.FC = () => {
               </summary>
               <div className="max-h-64 overflow-y-auto p-2 space-y-3 text-sm">
                 {[
-                  { key: "analyze", label: "Analyze Target", icon: "🔍", description: "Scan and gather detailed information about the asteroid" },
+                  { key: "analyze", label: "Analyze Target", icon: "🔍", description: "Scan and gather detailed information about the Impactor-2025 steroid" },
                   { key: "nuclearDetonation", label: "Nuclear Option", icon: "☢️", description: "Detonate near the asteroid to deflect with explosive force" },
                   { key: "laserAblation", label: "Laser Defense", icon: "🔦", description: "Heat the surface with lasers to vaporize material and push it" },
                   { key: "gravityTractor", label: "Gravity Tractor", icon: "🛸", description: "Use a spacecraft's gravity to slowly tug the asteroid's path" },
