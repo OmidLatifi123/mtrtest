@@ -221,20 +221,22 @@ const Page: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full h-screen bg-black text-white overflow-hidden">
-      {/* Main Content Area */}
-      <div className="flex flex-row flex-1 overflow-hidden">
-        {/* LEFT: 3D Scene (Full width when chat minimized, 2/3 when expanded) */}
-        <div className={`relative transition-all duration-300 ${chatExpanded ? 'w-2/3' : 'w-full'}`}>
-          <SpaceScene
-            effects={effects}
-            followingAsteroid={followingAsteroid}
-            asteroidClicked={asteroidClicked}
-            onAsteroidClick={() => {
-              setAsteroidClicked(true);
-              setFollowingAsteroid((prev) => !prev);
-            }}
-          />
+    <div className="fixed inset-0 bg-black text-white overflow-hidden">
+      {/* Main Content Area - Fixed height container */}
+      <div className="flex h-full">
+        {/* LEFT: 3D Scene */}
+        <div className={`relative transition-all duration-300 ${chatExpanded ? 'w-2/3' : 'w-full'} h-full`}>
+          <div className="w-full h-full">
+            <SpaceScene
+              effects={effects}
+              followingAsteroid={followingAsteroid}
+              asteroidClicked={asteroidClicked}
+              onAsteroidClick={() => {
+                setAsteroidClicked(true);
+                setFollowingAsteroid((prev) => !prev);
+              }}
+            />
+          </div>
 
           {/* HUD Overlay */}
           <div className="absolute top-4 left-4 z-10 bg-black/70 backdrop-blur-md rounded-xl p-3 text-white">
@@ -246,7 +248,7 @@ const Page: React.FC = () => {
             </div>
           </div>
 
-          {/* Mitigation Controls Dropdown (bottom-left corner of scene) */}
+          {/* Mitigation Controls Dropdown */}
           <div className="absolute bottom-4 left-4 z-20">
             <details className="bg-gray-900/80 backdrop-blur-md rounded-xl border border-gray-700 w-56">
               <summary className="cursor-pointer px-3 py-2 text-sm font-semibold flex items-center justify-between">
@@ -261,7 +263,6 @@ const Page: React.FC = () => {
                   { key: "gravityTractor", label: "Gravity Tractor", icon: "🛸", description: "Use a spacecraft's gravity to slowly tug the asteroid's path" },
                   { key: "ionBeamShepherd", label: "Ion Beam Shepherd", icon: "⚡", description: "Fire a steady ion stream to nudge the asteroid over time" },
                   { key: "kineticImpactor", label: "Kinetic Impactor", icon: "🚀", description: "Crash a high-speed probe to alter the asteroid's trajectory" },
-
                 ].map(({ key, label, icon, description }) => (
                   <div
                     key={key}
@@ -272,7 +273,7 @@ const Page: React.FC = () => {
                       <span className="font-medium">{label}</span>
                     </div>
                     <img
-                      src={`/images/${key}.jpg`} // put placeholder images in public/images
+                      src={`/images/${key}.jpg`}
                       alt={label}
                       className="w-full h-20 object-cover rounded-md border border-gray-600"
                     />
@@ -303,12 +304,11 @@ const Page: React.FC = () => {
           )}
         </div>
 
-        {/* RIGHT: Chat/Education Panel (Hidden when minimized, 1/3 width when expanded) */}
+        {/* RIGHT: Chat/Education Panel */}
         {chatExpanded && (
-          
-          <div className="w-1/3 flex flex-col border-l border-gray-700 bg-gray-900/80 backdrop-blur-sm h-full overflow-hidden">
+          <div className="w-1/3 flex flex-col border-l border-gray-700 bg-gray-900/80 backdrop-blur-sm h-full">
             {/* Panel Header with Tabs */}
-            <div className="p-4 border-b border-gray-700 bg-gray-800/50 flex-shrink-0">
+            <div className="flex-shrink-0 p-4 border-b border-gray-700 bg-gray-800/50">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   {activeTab === 'chat' ? <Bot size={20} /> : <BookOpen size={20} />}
@@ -343,7 +343,7 @@ const Page: React.FC = () => {
               </div>
               
               {/* Tab Navigation */}
-              <div className="flex gap-2 z-50">
+              <div className="flex gap-2">
                 <button
                   onClick={() => setActiveTab('chat')}
                   className={`flex items-center gap-2 px-3 py-1 rounded-lg text-sm transition-colors ${
@@ -370,7 +370,7 @@ const Page: React.FC = () => {
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-hidden">
               {activeTab === 'chat' ? (
                 <div className="flex flex-col h-full">
                   {/* Messages */}
@@ -455,7 +455,7 @@ const Page: React.FC = () => {
                   </div>
 
                   {/* Input */}
-                  <div className="p-4 border-t border-gray-700 bg-gray-800/30 flex-shrink-0">
+                  <div className="flex-shrink-0 p-4 border-t border-gray-700 bg-gray-800/30">
                     <div className="flex gap-2">
                       <textarea
                         value={input}
