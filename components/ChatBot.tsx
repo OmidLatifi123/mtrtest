@@ -61,7 +61,7 @@ function sniffEffectFromFreeText(t: string): EffectKey | null {
 
 // Try to extract `-- effect -- rest`
 function parsePrefixBlock(text: string): { key: EffectKey | "complete" | null; body: string; rawEffect: string | null } {
-  const m = text.match(/^\s*--\s*([^-\n]+?)\s*--\s*(.*)$/s);
+  const m = text.match(/^\s*--\s*([^-\n]+?)\s*--\s*(.*)$/);
   if (!m) return { key: null, body: text.trim(), rawEffect: null };
   const rawEffect = m[1];
   const body = m[2].trim();
